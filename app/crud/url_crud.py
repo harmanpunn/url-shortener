@@ -5,28 +5,28 @@ from datetime import datetime, timedelta, timezone
 from app.schemas.url import URLCreate
 from fastapi import HTTPException
 
+from app.utils import normalize_url
+
 
 # Function to create a short URL
 def create_short_url(db: Session, url_data: URLCreate) -> URL:
 
-    db_existing_url = db.query(URL).filter(URL.original_url == url_data.original_url).first()
+    normalized_url = normalize_url(url_data.original_url) 
+
+    db_existing_url = db.query(URL).filter(URL.original_url == normalized_url).first()
 
     if db_existing_url:
         return db_existing_url
     
     # Generates a short URL by taking the MD5 hash of the original URL and truncating it to 6 characters
-    short_url = hashlib.md5(url_data.original_url.encode()).hexdigest()[:6]
+    short_url = hashlib.md5(normalized_url.encode()).hexdigest()[:6]
 
-    expiration = None
-    if url_data.expiration_time:
-        expiration = datetime.now(timezone.utc) + timedelta(days=url_data.expiration_time)
-    else:
-        expiration = datetime.now(timezone.utc) + timedelta(days=365) # We are setting the default expiration time to 1 year
+    expiration = datetime.now(timezone.utc) + timedelta(days=url_data.expiration_time or 365) # We are setting the default expiration time to 1 year
 
     # Creating URL model
     db_url = URL(
         short_url=short_url,
-        original_url=url_data.original_url,
+        original_url=normalized_url,
         expiration_time=expiration,
         created_at=datetime.now(timezone.utc)
     )
