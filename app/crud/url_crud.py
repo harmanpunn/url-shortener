@@ -9,11 +9,17 @@ from fastapi import HTTPException
 # Function to create a short URL
 def create_short_url(db: Session, url_data: URLCreate) -> URL:
 
+    db_existing_url = db.query(URL).filter(URL.original_url == url_data.original_url).first()
+
+    if db_existing_url:
+        return db_existing_url
+    
+    # Generates a short URL by taking the MD5 hash of the original URL and truncating it to 6 characters
     short_url = hashlib.md5(url_data.original_url.encode()).hexdigest()[:6]
 
     expiration = None
     if url_data.expiration_time:
-        expiration = datetime.now(timezone.utc) + timedelta(hours=url_data.expiration_time)
+        expiration = datetime.now(timezone.utc) + timedelta(days=url_data.expiration_time)
     else:
         expiration = datetime.now(timezone.utc) + timedelta(days=365) # We are setting the default expiration time to 1 year
 

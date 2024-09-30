@@ -11,8 +11,15 @@ tab1, tab2, tab3 = st.tabs(["Shorten URL", "Manage URLs", "Delete URL"])
 with tab1:
     st.header("Shorten a URL")
     long_url = st.text_input("Enter the long URL:")
-    expiration_time = st.number_input("Expiration time (hours, optional):", min_value=0, value=0)
-    
+    expiration_time = st.number_input(
+        "Expiration time (days, default: 365 days):",
+        min_value=1,  # Minimum value should be at least 1 day
+        value=365,    # Default to 365 days
+        help="Specify the number of days after which the URL will expire. The default is 365 days."
+    ) 
+
+    st.write(f"The URL will expire after {expiration_time} days.")   
+
     if st.button("Shorten URL"):
         if not long_url:
             st.error("Please enter a valid long URL.")
@@ -40,11 +47,22 @@ with tab2:
         response = requests.get(f"{API_URL}/urls")
         if response.status_code == 200:
             urls = response.json()
-            for url_data in urls:
-                st.write(f"Short URL: {url_data['short_url']}")
-                st.write(f"Original URL: {url_data['original_url']}")
-                st.write(f"Expiration Time: {url_data['expiration_time']}")
-                st.write("---")
+            
+            # Prepare data for table
+            if urls:
+                import pandas as pd
+                url_data = [
+                    {
+                        "Short URL": url['short_url'],
+                        "Original URL": url['original_url'],
+                        "Expiration Time": url['expiration_time']
+                    }
+                    for url in urls
+                ]
+                df = pd.DataFrame(url_data)
+                st.dataframe(df)  # Display as a table
+            else:
+                st.info("No URLs available.")
         else:
             st.error("Error fetching URLs")
 
