@@ -38,3 +38,20 @@ def get_original_url(db: Session, short_url: str) -> URL:
         return db_url
     
     return None
+
+# Delete the shortened URL
+def delete_short_url(db: Session, short_url: str) -> URL:
+
+    db_url = db.query(URL).filter(URL.short_url == short_url).first()
+
+    if db_url:
+        db.delete(db_url)
+        db.commit()
+        return True
+
+    return False
+
+# Retrieve all shortened URLs
+def get_all_short_urls(db: Session) -> list:
+
+    return db.query(URL).all()
