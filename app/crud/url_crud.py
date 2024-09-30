@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from app.models.url import URL
 from datetime import datetime, timedelta, timezone
 from app.schemas.url import URLCreate
+from fastapi import HTTPException
+
 
 # Function to create a short URL
 def create_short_url(db: Session, url_data: URLCreate) -> URL:
@@ -12,6 +14,8 @@ def create_short_url(db: Session, url_data: URLCreate) -> URL:
     expiration = None
     if url_data.expiration_time:
         expiration = datetime.now(timezone.utc) + timedelta(hours=url_data.expiration_time)
+    else:
+        expiration = datetime.now(timezone.utc) + timedelta(days=365) # We are setting the default expiration time to 1 year
 
     # Creating URL model
     db_url = URL(
@@ -31,13 +35,18 @@ def create_short_url(db: Session, url_data: URLCreate) -> URL:
 
 # Function to retrieve the original URL
 def get_original_url(db: Session, short_url: str) -> URL:
-
     db_url = db.query(URL).filter(URL.short_url == short_url).first()
 
-    if db_url and (not db_url.expiration_time or db_url.expiration_time.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc)):
+    if db_url:
+        if db_url.expiration_time and db_url.expiration_time.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+            # Delete expired URL from the database for DB cleanup
+            db.delete(db_url)
+            db.commit()
+            raise HTTPException(status_code=410, detail="URL has expired and was deleted.")
         return db_url
     
-    return None
+    # Raise a 404 if the short URL doesn't exist
+    raise HTTPException(status_code=404, detail="URL not found.")
 
 # Delete the shortened URL
 def delete_short_url(db: Session, short_url: str) -> URL:

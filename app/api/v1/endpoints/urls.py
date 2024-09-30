@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+import logging
+
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.schemas.url import URLCreate, URLResponse
@@ -7,6 +9,9 @@ from app.db.database import get_db
 from datetime import datetime, timezone
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
+
 
 @router.post("/shorten", response_model=URLResponse)
 def shorten_url(url_data: URLCreate, db: Session = Depends(get_db)):
@@ -19,19 +24,28 @@ def shorten_url(url_data: URLCreate, db: Session = Depends(get_db)):
 
 # Retrieve all shortened URLs
 @router.get("/urls", response_model=list[URLResponse])
-def get_all_shortened_urls(db: Session = Depends(get_db)):
-    return get_all_short_urls(db)
+def list_all_urls(db: Session = Depends(get_db)):
+    db_urls = get_all_short_urls(db)
+    
+    if not db_urls:
+        raise HTTPException(status_code=404, detail="No URLs found")
+    
+    return [
+        URLResponse(
+            short_url=f"http://localhost:8000/{db_url.short_url}",
+            original_url=db_url.original_url,
+            expiration_time=db_url.expiration_time
+        ) for db_url in db_urls
+    ]
+
 
 # Accessing details (metadata) about a specific URL
 @router.get("/urls/{short_url}", response_model=URLResponse)
 def get_url_metadata(short_url: str, db: Session = Depends(get_db)):
-    db_url = get_original_url(db, short_url)
-    
-    if not db_url:
-        raise HTTPException(status_code=404, detail="URL not found or expired")
-    
-    if db_url.expiration_time and db_url.expiration_time.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        raise HTTPException(status_code=404, detail="URL expired")
+    try:
+        db_url = get_original_url(db, short_url)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
     
     return URLResponse(
         short_url = f"http://localhost:8000/{db_url.short_url}",
@@ -43,7 +57,7 @@ def get_url_metadata(short_url: str, db: Session = Depends(get_db)):
 @router.delete("/{short_url}")
 def delete_shortened_url(short_url: str, db: Session = Depends(get_db)):
     if not delete_short_url(db, short_url):
-        raise HTTPException(status_code=404, detail="URL not found")
+        raise HTTPException(status_code=404, message="URL not found")
     
     return {"message": "URL deleted successfully"}
 
