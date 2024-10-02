@@ -7,3 +7,4 @@ streamlit
 requests
 streamlit_js_eval
 validators
+pyperclip

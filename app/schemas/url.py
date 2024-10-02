@@ -13,6 +13,7 @@ class URLResponse(BaseModel):
     short_url: str
     original_url: str
     expiration_time: Optional[datetime] = None
+    short_url_key: str = None
 
     class Config:
         orm_mode = True # This tells Pydantic to work with SQLAlchemy models

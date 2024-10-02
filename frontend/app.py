@@ -4,7 +4,9 @@ from datetime import date, timedelta, time, datetime
 from zoneinfo import ZoneInfo
 from streamlit_js_eval import streamlit_js_eval
 from utils import local_date_to_utc, utc_date_to_local, get_user_timezone, is_valid_url
-
+import pyperclip
+import math
+import os
 
 API_URL = "http://localhost:8000/api/v1"
 
@@ -16,7 +18,7 @@ tab1, tab2, tab3 = st.tabs(["Shorten URL", "Manage URLs", "Delete URL"])
 
 with tab1:
     st.header("Shorten a URL")
-    long_url = st.text_input("Enter the long URL:")
+    long_url = st.text_input("Your long URL:")
     default_expiration_date = date.today() + timedelta(days=365)
 
     
@@ -65,56 +67,98 @@ with tab1:
                 st.error("Error shortening URL")
 
 
+# Number of items per page for pagination
+ITEMS_PER_PAGE = 5
+
+# Function to get URLs from API
+def get_urls():
+    response = requests.get(f"{API_URL}/urls")
+    if response.status_code == 200:
+        return response.json()
+    return []
+
+# Pagination function to slice the data for the current page
+def paginate_data(data, page, items_per_page):
+    start = page * items_per_page
+    end = start + items_per_page
+    return data[start:end]
+
+
+
 with tab2:
-    st.header("View All Shortened URLs")
+    st.subheader("Your shortened URLs")
 
-    # Option to get all URLs
-    if st.button("Get All URLs"):
-        response = requests.get(f"{API_URL}/urls")
-        if response.status_code == 200:
-            urls = response.json()
-            
-            # Prepare data for table
-            if urls:
-                import pandas as pd
-                url_data = [
-                    {
-                        "Short URL": url['short_url'],
-                        "Original URL": url['original_url'],
-                        "Expiration Time": utc_date_to_local(url['expiration_time'], user_timezone).strftime('%Y-%m-%d %H:%M:%S')
-                    }
-                    for url in urls
-                ]
-                df = pd.DataFrame(url_data)
-                st.dataframe(df)  # Display as a table
-            else:
-                st.info("No URLs available.")
-        else:
-            st.error("Error fetching URLs")
+    # Current page for pagination (maintained across re-renders)
+    if "current_page" not in st.session_state:
+        st.session_state.current_page = 0
 
-    st.subheader("Get Specific URL Metadata")
-    short_url_input = st.text_input("Enter short URL (e.g., 0b7a59):")
+    # Fetch the URLs from the API
+    urls = get_urls()
     
-    if st.button("Get URL Metadata"):
-        if short_url_input:
-            response = requests.get(f"{API_URL}/urls/{short_url_input}")
-            
-            if response.status_code == 200:
-                url_data = response.json()
-                st.write(f"Short URL: {url_data['short_url']}")
-                st.write(f"Original URL: {url_data['original_url']}")
+    if urls:
+        # Pagination setup
+        total_pages = math.ceil(len(urls) / ITEMS_PER_PAGE)
+        
+        # Get URLs for the current page
+        current_page_urls = paginate_data(urls, st.session_state.current_page, ITEMS_PER_PAGE)
 
-                # Convert expiration time to local time
-                expiration_time_local = utc_date_to_local(url_data['expiration_time'], user_timezone)
+        for url in current_page_urls:
+            # Convert expiration time to local time
+            expiration_time_local = utc_date_to_local(url['expiration_time'], user_timezone)
 
-                # st.write(f"Expiration Time: {url_data['expiration_time']}")
-                st.write(f"Expiration Time: {expiration_time_local.strftime('%Y-%m-%d %H:%M:%S')}")
-            elif response.status_code == 404:
-                st.error("URL not found or expired")
-            else:
-                st.error("Error fetching URL metadata")
-        else:
-            st.error("Please enter a valid short URL")
+            # Creating a unique key for each URL
+            key = url['short_url']
+
+            with st.container(border=True):
+                # Custom HTML/CSS for Short URL and Original URL
+                st.markdown(
+                    f"""
+                    <div style="padding: 10px; border-radius: 5px;">
+                        <p style="font-size:20px; font-weight:bold; color:#333;">
+                            <a href="{url['short_url']}" style="text-decoration:none; color:#333;">{url['short_url']}</a>
+                        </p>
+                        <p style="font-size:14px; color:gray;">
+                            <a href="{url['original_url']}" style="color:gray;">{url['original_url']}</a>
+                        </p>
+                        <p>Expires on: {expiration_time_local.strftime('%Y-%m-%d %H:%M:%S')}</p>
+                    </div>
+                    """, unsafe_allow_html=True
+                )
+
+                col1, col2 = st.columns([1,1], gap="small")
+
+                copy_button = col1.button("Copy to clipboard", key=f"copy_{key}", type="secondary", use_container_width=True)
+                delete_button = col2.button("Delete", key=f"delete_{key}", type="primary", use_container_width=True)
+
+                # Copy to clipboard action
+                if copy_button:
+                    pyperclip.copy(url['short_url'])
+                    st.toast(f"Copied to clipboard: {url['short_url']}", icon='😍')
+
+                # Delete action
+                if delete_button:
+                    # Send a DELETE request to the API to delete the URL
+                    response = requests.delete(f"{API_URL}/{url['short_url_key']}")
+                    if response.status_code == 200:
+                        st.toast(f"Short URL {url['short_url']} deleted successfully.")
+                        # Refresh the list of URLs by re-fetching the data
+                        urls = get_urls()
+                    else:
+                        st.error(f"Error deleting URL {url['short_url']}. It might not exist or could not be deleted.")
+
+        # Pagination controls
+        col1, col2 = st.columns(2)
+
+        if col1.button("Previous", disabled=(st.session_state.current_page == 0)):
+            st.session_state.current_page -= 1
+
+        if col2.button("Next", disabled=(st.session_state.current_page >= total_pages - 1)):
+            st.session_state.current_page += 1
+
+        st.write(f"Page {st.session_state.current_page + 1} of {total_pages}")
+
+    else:
+        st.info("No URLs available.")
 
 
 with tab3:

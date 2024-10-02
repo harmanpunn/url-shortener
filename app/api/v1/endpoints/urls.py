@@ -34,7 +34,8 @@ def list_all_urls(db: Session = Depends(get_db)):
         URLResponse(
             short_url=f"http://localhost:8000/{db_url.short_url}",
             original_url=db_url.original_url,
-            expiration_time=db_url.expiration_time
+            expiration_time=db_url.expiration_time,
+            short_url_key = db_url.short_url
         ) for db_url in db_urls
     ]
 
