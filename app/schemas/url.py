@@ -5,7 +5,8 @@ from datetime import datetime
 class URLCreate(BaseModel):
     original_url: str
 
-    expiration_time: Optional[int] = None  # Expiration in days, optional
+    # expiration_time: Optional[int] = None  # Expiration in days, optional
+    expiration_time: Optional[datetime] = None  # Expiration in days, optional
 
 
 class URLResponse(BaseModel):
