@@ -28,7 +28,7 @@ This project is a simple URL Shortener API built using **FastAPI** for the backe
 1. **Clone the repository**:
 
 ```
-git clone https://github.com/your-username/url-shortener.git
+git clone https://github.com/harmanpunn/url-shortener.git
 cd url-shortener
 ```
 
@@ -49,7 +49,7 @@ pip install -r requirements.txt
    - Create an `.env` file with the following content:
 
 ```
-DATABASE_URL=sqlite:///./test.db  # For local development with SQLite
+DATABASE_URL=sqlite:///./test.db  
 ```
 
 5. **Initialize the database**:
@@ -82,9 +82,15 @@ The Streamlit app will open in your browser at `http://localhost:8501`, where yo
 
 ## Future Enhancements
 
-- Add more detailed URL analytics (e.g., number of clicks, time of access).
-- Implement user authentication for managing URLs (optional).
-- Extend the frontend with a more feature-rich UI using React or Next.js.
+- Add detailed URL analytics (e.g., number of clicks, time of access).
+- Implement user authentication and user management.
+- Allow custom aliases for shortened URLs.
+- Introduce caching for frequently accessed URLs.
+- Implement database sharding and partitioning for scalability.
+- Use load balancing for high availability and auto-scaling.
+- Add rate limiting to prevent abuse.
+- Improve the frontend with a React or Next.js-based UI.
+- Security enhancements
   
 ## Contributing
 
