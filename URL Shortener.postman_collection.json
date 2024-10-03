@@ -1,0 +1,127 @@
+{
+	"info": {
+		"_postman_id": "041f59a7-0430-4387-8e00-ce6d08f9b41f",
+		"name": "URL Shortener",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5305959"
+	},
+	"item": [
+		{
+			"name": "/api/v1/shorten",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"original_url\": \"https://stackoverflow.com/questions/79005084/how-to-access-evaluation-metrics-in-new-sagemaker-studio-ui-after-doing-model-re\",\r\n  \"expiration_time\": \"2024-12-31 23:59:59.000000\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8000/api/v1/shorten",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"shorten"
+					]
+				},
+				"description": "Create Short URL API  \nGenerates a shortened URL from a long URL, with optional expiration date."
+			},
+			"response": []
+		},
+		{
+			"name": "/{short_url}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/r8kb9g",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"r8kb9g"
+					]
+				},
+				"description": "Redirects users from a shortened URL to the original long URL."
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v1/urls",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/urls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"urls"
+					]
+				},
+				"description": "Get all short urls"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v1/urls/{short_url}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/urls/rT7E98",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"urls",
+						"rT7E98"
+					]
+				},
+				"description": "Get metadata for a specific url"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v1/{short_url}",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/rT7E98",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"rT7E98"
+					]
+				},
+				"description": "Deletes a specified shortened URL from the service."
+			},
+			"response": []
+		}
+	]
+}
