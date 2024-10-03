@@ -19,7 +19,8 @@ def shorten_url(url_data: URLCreate, db: Session = Depends(get_db)):
     return URLResponse(
         short_url = f"http://localhost:8000/{db_url.short_url}",
         original_url = db_url.original_url,
-        expiration_time = db_url.expiration_time
+        expiration_time = db_url.expiration_time,
+        short_url_key = db_url.short_url
     )
 
 # Retrieve all shortened URLs
@@ -51,14 +52,15 @@ def get_url_metadata(short_url: str, db: Session = Depends(get_db)):
     return URLResponse(
         short_url = f"http://localhost:8000/{db_url.short_url}",
         original_url = db_url.original_url,
-        expiration_time = db_url.expiration_time
+        expiration_time = db_url.expiration_time,
+        short_url_key = db_url.short_url
     )
 
 # Delete a short URL
 @router.delete("/{short_url}")
 def delete_shortened_url(short_url: str, db: Session = Depends(get_db)):
     if not delete_short_url(db, short_url):
-        raise HTTPException(status_code=404, message="URL not found")
+        raise HTTPException(status_code=404, detail="URL not found")
     
     return {"message": "URL deleted successfully"}
 
