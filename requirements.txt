@@ -1,6 +1,10 @@
 fastapi
 uvicorn
 sqlalchemy
-pydantic
+pydantic==1.10.12
+pydantic[dotenv]
 streamlit
 requests
+streamlit_js_eval
+validators
+pyperclip
