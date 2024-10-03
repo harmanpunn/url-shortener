@@ -143,6 +143,10 @@ with tab2:
                         st.toast(f"Short URL {url['short_url']} deleted successfully.")
                         # Refresh the list of URLs by re-fetching the data
                         urls = get_urls()
+
+                        # Update the UI
+                        st.rerun()
+
                     else:
                         st.error(f"Error deleting URL {url['short_url']}. It might not exist or could not be deleted.")
 
